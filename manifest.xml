@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp
+    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+    xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
+    xsi:type="MailApp">
+
+  <!-- IMPORTANT: Replace {GITHUB_USERNAME} with your actual GitHub username everywhere below -->
+  <!-- Example: if your username is "kyosufzai", replace {GITHUB_USERNAME} with "kyosufzai" throughout -->
+
+  <Id>8a4f3e2c-7b91-4d56-a8f0-2c5e9d3b7a14</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>CBRE LA North Capital Markets</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Smart Reply" />
+  <Description DefaultValue="AI-powered listing reply with auto-attached OM for the LA North Capital Markets team." />
+  <IconUrl DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/icons/icon-64.png" />
+  <HighResolutionIconUrl DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/icons/icon-128.png" />
+  <SupportUrl DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/" />
+
+  <Hosts>
+    <Host Name="Mailbox" />
+  </Hosts>
+
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.5" />
+    </Sets>
+  </Requirements>
+
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/taskpane.html" />
+        <RequestedHeight>320</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+  <Permissions>ReadWriteMailbox</Permissions>
+
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+  </Rule>
+
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.5">
+        <bt:Set Name="Mailbox" />
+      </bt:Sets>
+    </Requirements>
+
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <DesktopFormFactor>
+          <FunctionFile resid="Commands.Url" />
+
+          <ExtensionPoint xsi:type="MessageReadCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="msgReadGroup">
+                <Label resid="GroupLabel" />
+                <Control xsi:type="Button" id="smartReplyButton">
+                  <Label resid="SmartReplyButton.Label" />
+                  <Supertip>
+                    <Title resid="SmartReplyButton.Label" />
+                    <Description resid="SmartReplyButton.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16" />
+                    <bt:Image size="32" resid="Icon.32x32" />
+                    <bt:Image size="80" resid="Icon.80x80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/icons/icon-16.png" />
+        <bt:Image id="Icon.32x32" DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/icons/icon-32.png" />
+        <bt:Image id="Icon.80x80" DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/icons/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Commands.Url" DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/commands.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://{GITHUB_USERNAME}.github.io/cbre-smart-reply/taskpane.html" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GroupLabel" DefaultValue="CBRE Capital Markets" />
+        <bt:String id="SmartReplyButton.Label" DefaultValue="Smart Reply" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="SmartReplyButton.Tooltip" DefaultValue="AI-powered listing reply: auto-detects the listing, drafts the body, attaches the OM, opens reply for review." />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
