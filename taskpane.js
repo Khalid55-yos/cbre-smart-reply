@@ -16,8 +16,7 @@
 // ============================================================================
 
 // Replace this with your Power Automate HTTP trigger URL after creating the flow
-const FLOW_URL = 'https://852cb0da7269e604b176df59b67472.1c.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c03f2810c8854e92a26621f657f84fb9/triggers/manual/paths/invoke?api-version=1';
-// ============================================================================
+https://852cb0da7269e604b176df59b67472.1c.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c03f2810c8854e92a26621f657f84fb9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gjpbEaDGUZDT7GUGRqN3P0FtobojOVuuPBeyzOpd_Co// ============================================================================
 // STATE
 // ============================================================================
 
