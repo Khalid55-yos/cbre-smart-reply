@@ -16,7 +16,7 @@
 // ============================================================================
 
 // Replace this with your Power Automate HTTP trigger URL after creating the flow
-const FLOW_URL = 'PASTE_YOUR_POWER_AUTOMATE_HTTP_TRIGGER_URL_HERE';
+const FLOW_URL = 'https://prod-XX.westus.logic.azure.com:443/workflows/abc123/triggers/manual/paths/invoke?api-version=2016-06-01&sp=...&sv=...&sig=...';
 
 // ============================================================================
 // STATE
