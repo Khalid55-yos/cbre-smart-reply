@@ -139,7 +139,11 @@ function handleFlowResponse(data) {
     return;
   }
 
-  allListings = data.allListings || [];
+allListings = data.allListings || [];
+// Power Automate sometimes returns arrays as JSON strings — parse if needed
+if (typeof allListings === 'string') {
+  try { allListings = JSON.parse(allListings); } catch (e) { allListings = []; }
+}
   detectedListing = data.listingName || '';
   currentReplyBody = data.replyBody || '';
   currentOmFilename = data.omFilename || '';
@@ -147,7 +151,8 @@ function handleFlowResponse(data) {
 
   populateListingDropdown(allListings, detectedListing);
 
-  if (data.detected && data.listingName) {
+const isDetected = data.detected === true || data.detected === 'true';
+if (isDetected && data.listingName) {
     setStatus(`Detected: ${data.listingName}`, 'success');
     showDetection(`Auto-detected from email subject. Change above if wrong.`, 'detected');
     showPreview(currentReplyBody, currentOmFilename);
