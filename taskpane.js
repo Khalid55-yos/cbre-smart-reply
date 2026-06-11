@@ -97,8 +97,10 @@ async function callFlow(emailContext) {
     throw new Error('Flow URL not configured. Edit taskpane.js and set FLOW_URL.');
   }
 
-  const response = await fetch(FLOW_URL, {
+const response = await fetch(FLOW_URL, {
     method: 'POST',
+    mode: 'cors',
+    credentials: 'omit',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       subject: emailContext.subject,
@@ -229,10 +231,12 @@ async function onListingChange() {
   setStatus(`Fetching ${chosenName}…`);
 
   try {
-    const response = await fetch(FLOW_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+const response = await fetch(FLOW_URL, {
+    method: 'POST',
+    mode: 'cors',
+    credentials: 'omit',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
         listingNameOverride: chosenName,
         subject: '',
         body: '',
