@@ -65,14 +65,16 @@ async function loadListings() {
       // Skip if no Item ID (can't be matched)
       if (!itemId) return;
 
-      // Display: prefer "Name — Address", fall back to just Address, then Item ID
+      // Display: prefer "Name — Address", but dedupe if they match (case-insensitive)
       let display;
-      if (name && address) {
-        display = name + " — " + address;
-      } else if (address) {
-        display = address;
-      } else if (name) {
-        display = name;
+      const nameTrim = name.trim();
+      const addrTrim = address.trim();
+      if (nameTrim && addrTrim && nameTrim.toLowerCase() !== addrTrim.toLowerCase()) {
+        display = nameTrim + " — " + addrTrim;
+      } else if (addrTrim) {
+        display = addrTrim;
+      } else if (nameTrim) {
+        display = nameTrim;
       } else {
         display = "Listing " + itemId;
       }
