@@ -1,5 +1,5 @@
-// Smart Reply v3.1 — Outlook Add-in
-// Dynamically loads listings from Dataverse, then calls v3.1 flow on Generate
+// Smart Reply v3.2 — Outlook Add-in
+// Dropdown now sends SharePoint Item ID (more reliable than Name)
 
 const GET_LISTINGS_ENDPOINT = "https://852cb0da7269e604b176df59b67472.1c.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/7fc7fb5aa81947908488ccf927345ed1/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=bfZCgAT0cnWLXMuels1niYu7edMMOLxrirCEGjGnKrk";
 
@@ -16,7 +16,6 @@ async function loadListings() {
   const select = document.getElementById("listing-select");
   const btn = document.getElementById("generate-btn");
 
-  // Show loading state
   select.innerHTML = '<option value="">Loading listings...</option>';
   select.disabled = true;
   btn.disabled = true;
@@ -34,8 +33,6 @@ async function loadListings() {
 
     const data = await response.json();
 
-    // Flexibly extract the listings array from the response
-    // Could be: {"listings": [...]} or {"value": [...]} or [...] directly
     let listings = [];
     if (Array.isArray(data)) {
       listings = data;
@@ -47,14 +44,13 @@ async function loadListings() {
       throw new Error("Unexpected response format");
     }
 
-    // Sort alphabetically by name
+    // Sort by address (fallback to name) since names may be empty
     listings.sort(function (a, b) {
-      const aName = (a.crcce_newcolumn || a.name || "").toLowerCase();
-      const bName = (b.crcce_newcolumn || b.name || "").toLowerCase();
-      return aName.localeCompare(bName);
+      const aKey = ((a.crcce_address || a.crcce_newcolumn || "")).toLowerCase();
+      const bKey = ((b.crcce_address || b.crcce_newcolumn || "")).toLowerCase();
+      return aKey.localeCompare(bKey);
     });
 
-    // Populate dropdown
     if (listings.length === 0) {
       select.innerHTML = '<option value="">No listings found</option>';
       return;
@@ -62,10 +58,26 @@ async function loadListings() {
 
     let html = '<option value="">Select a listing...</option>';
     listings.forEach(function (listing) {
-      const name = listing.crcce_newcolumn || listing.name || "Unnamed";
+      const itemId = listing.crcce_sharepointitemid || "";
+      const name = listing.crcce_newcolumn || "";
       const address = listing.crcce_address || "";
-      const display = address ? name + " — " + address : name;
-      html += '<option value="' + escapeHtmlAttr(name) + '">' + escapeHtmlText(display) + '</option>';
+
+      // Skip if no Item ID (can't be matched)
+      if (!itemId) return;
+
+      // Display: prefer "Name — Address", fall back to just Address, then Item ID
+      let display;
+      if (name && address) {
+        display = name + " — " + address;
+      } else if (address) {
+        display = address;
+      } else if (name) {
+        display = name;
+      } else {
+        display = "Listing " + itemId;
+      }
+
+      html += '<option value="' + escapeHtmlAttr(itemId) + '">' + escapeHtmlText(display) + '</option>';
     });
 
     select.innerHTML = html;
@@ -73,24 +85,25 @@ async function loadListings() {
     btn.disabled = false;
   } catch (err) {
     console.error("Failed to load listings:", err);
-    // Fallback: hardcoded option so the add-in still works
     select.innerHTML =
-      '<option value="">Could not load \u2014 using fallback</option>' +
-      '<option value="141 S Lake Ave">141 S Lake Ave (fallback)</option>';
+      '<option value="">Could not load \u2014 retry</option>';
     select.disabled = false;
     btn.disabled = false;
-    showStatus("⚠️ Couldn't load listings: " + err.message, "error");
+    showStatus("\u26a0\ufe0f Couldn't load listings: " + err.message, "error");
   }
 }
 
 async function handleGenerate() {
   const btn = document.getElementById("generate-btn");
-  const listingName = document.getElementById("listing-select").value;
+  const select = document.getElementById("listing-select");
+  const listingId = select.value;
+  // Display label for the chosen listing (used in the reply body)
+  const listingLabel = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
   const includeVdr = document.getElementById("include-vdr").checked;
   const includeOm = document.getElementById("include-om").checked;
 
-  if (!listingName) {
-    showStatus("⚠️ Pick a listing first", "error");
+  if (!listingId) {
+    showStatus("\u26a0\ufe0f Pick a listing first", "error");
     return;
   }
 
@@ -106,7 +119,8 @@ async function handleGenerate() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        listingName: listingName,
+        // listingName field now carries the SharePoint Item ID (v3.1 filter uses Item ID)
+        listingName: listingId,
         emailFrom: emailData.from,
         emailSubject: emailData.subject,
         emailBody: emailData.body
@@ -121,16 +135,21 @@ async function handleGenerate() {
 
     showStatus("Opening reply...", "loading");
 
-    const replyHtml = formatReplyBody(data, { includeVdr: includeVdr, includeOm: includeOm });
+    // Use dropdown label for display since data.listingName is now an Item ID
+    const replyHtml = formatReplyBody(data, {
+      includeVdr: includeVdr,
+      includeOm: includeOm,
+      listingLabel: listingLabel
+    });
 
     Office.context.mailbox.item.displayReplyForm({
       htmlBody: replyHtml
     });
 
-    showStatus("✅ Reply draft opened. Review before sending!", "success");
+    showStatus("\u2705 Reply draft opened. Review before sending!", "success");
   } catch (err) {
     console.error(err);
-    showStatus("❌ " + err.message, "error");
+    showStatus("\u274c " + err.message, "error");
   } finally {
     btn.disabled = false;
   }
@@ -164,7 +183,8 @@ function formatReplyBody(data, opts) {
   const aiBody = (data.body || "").trim();
   const omUrl = data.omUrl || "";
   const vdrAccess = data.vdrAccess || "";
-  const listingName = data.listingName || "this listing";
+  // Prefer the dropdown label (human readable) over the raw Item ID returned from the flow
+  const listingName = opts.listingLabel || data.listingName || "this listing";
 
   const aiBodyHtml = escapeHtmlText(aiBody).replace(/\n/g, "<br>");
 
@@ -175,11 +195,11 @@ function formatReplyBody(data, opts) {
   if (showVdr || showOm) {
     linksHtml = '<p style="margin-top: 16px;"><strong>Materials for ' + escapeHtmlText(listingName) + ':</strong><br>';
     if (showVdr) {
-      linksHtml += '📋 <a href="' + vdrAccess + '">Virtual Deal Room (sign CA to access full materials)</a>';
+      linksHtml += '\ud83d\udccb <a href="' + vdrAccess + '">Virtual Deal Room (sign CA to access full materials)</a>';
       if (showOm) linksHtml += '<br>';
     }
     if (showOm) {
-      linksHtml += '📄 <a href="' + omUrl + '">Offering Memorandum (direct PDF)</a>';
+      linksHtml += '\ud83d\udcc4 <a href="' + omUrl + '">Offering Memorandum (direct PDF)</a>';
     }
     linksHtml += '</p>';
   }
@@ -187,7 +207,7 @@ function formatReplyBody(data, opts) {
   return (
     '<div style="font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #222;">' +
     '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 14px; margin-bottom: 18px; color: #856404; font-size: 10pt;">' +
-    '<strong>⚠️ AI-GENERATED DRAFT</strong><br>' +
+    '<strong>\u26a0\ufe0f AI-GENERATED DRAFT</strong><br>' +
     'Review and edit before sending.' +
     '</div>' +
     '<p>' + aiBodyHtml + '</p>' +
